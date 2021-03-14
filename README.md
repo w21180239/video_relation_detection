@@ -39,7 +39,8 @@ to [ImageCaptioning.pytorch](https://github.com/yunjey/pytorch-tutorial/tree/mas
 
 ## Data
 
-put kaggle data into data/5242_data and unzip it.
+put kaggle data into data/5242_data and unzip it. But I have done it and preprocess the data. So when you run this
+project with the original dataset, you don't need to do that.
 
 ## Usage
 
