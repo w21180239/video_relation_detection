@@ -21,11 +21,15 @@ def extract_feats(params, model, load_image_fn):
         os.mkdir(dir_fc)
     print("save video feats to %s" % (dir_fc))
 
-    frame_path_list = os.listdir(os.path.join(params['video_path']))
-    for frame_path in tqdm(frame_path_list):
-
+    train_val_frame_path_list = os.listdir(os.path.join(params['video_path'] + '/train'))
+    test_frame_path_list = os.listdir(os.path.join(params['video_path'] + '/test'))
+    for frame_path in tqdm(train_val_frame_path_list, desc='processing train_val video data'):
         video_id = int(frame_path)
-        image_list = sorted(glob.glob(os.path.join(params['video_path'] + '/' + frame_path, '*.jpg')))
+        outfile = os.path.join(dir_fc, f'video{video_id}.npy')
+        if os.path.exists(outfile):
+            continue
+
+        image_list = sorted(glob.glob(os.path.join(params['video_path'] + '/train/' + frame_path, '*.jpg')))
         samples = np.round(np.linspace(
             0, len(image_list) - 1, params['n_frame_steps']))
         image_list = [image_list[int(sample)] for sample in samples]
@@ -40,7 +44,29 @@ def extract_feats(params, model, load_image_fn):
 
         img_feats = fc_feats.cpu().numpy()
         # Save the inception features
+        np.save(outfile, img_feats)
+
+    for frame_path in tqdm(test_frame_path_list, desc='processing test video data'):
+        video_id = int(frame_path) + len(train_val_frame_path_list)
         outfile = os.path.join(dir_fc, f'video{video_id}.npy')
+        if os.path.exists(outfile):
+            continue
+
+        image_list = sorted(glob.glob(os.path.join(params['video_path'] + '/test/' + frame_path, '*.jpg')))
+        samples = np.round(np.linspace(
+            0, len(image_list) - 1, params['n_frame_steps']))
+        image_list = [image_list[int(sample)] for sample in samples]
+        images = torch.zeros((len(image_list), C, H, W))
+        for iImg in range(len(image_list)):
+            img = load_image_fn(image_list[iImg])
+            images[iImg] = img
+        with torch.no_grad():
+            if params['gpu'] != '-1':
+                images = images.cuda()
+            fc_feats = model(images).squeeze()
+
+        img_feats = fc_feats.cpu().numpy()
+        # Save the inception features
         np.save(outfile, img_feats)
 
 
@@ -54,7 +80,7 @@ if __name__ == '__main__':
                         help='how many frames to sampler per video')
 
     parser.add_argument("--video_path", dest='video_path', type=str,
-                        default='data/train-video', help='path to video dataset')
+                        default='data/5242_data', help='path to video dataset')
     parser.add_argument("--model", dest="model", type=str, default='resnet152',
                         help='the CNN model you want to use to extract_feats')
 
