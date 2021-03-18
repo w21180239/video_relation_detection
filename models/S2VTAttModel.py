@@ -26,5 +26,5 @@ class S2VTAttModel(nn.Module):
             seq_preds: [] or Variable of shape [batch_size, max_len-1]
         """
         encoder_outputs, encoder_hidden = self.encoder(vid_feats)
-        seq_prob, seq_preds = self.decoder(encoder_outputs, encoder_hidden, target_variable, mode, opt)
+        seq_prob, seq_preds,top5_seq_logprobs,top5_seq_preds = self.decoder(encoder_outputs, encoder_hidden, target_variable, mode, opt)
         return seq_prob, seq_preds

@@ -22,3 +22,4 @@ model_0, loss: 14.420896
 model_0, loss: 14.600924
 model_0, loss: 14.734729
 model_50, loss: 0.118105
+model_0, loss: 14.585753

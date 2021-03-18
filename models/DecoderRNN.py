@@ -30,7 +30,7 @@ class DecoderRNN(nn.Module):
                  bidirectional=False,
                  input_dropout_p=0.1,
                  rnn_dropout_p=0.1,
-                 using_gpu = True):
+                 using_gpu=True):
         super(DecoderRNN, self).__init__()
 
         self.using_gpu = using_gpu
@@ -88,6 +88,8 @@ class DecoderRNN(nn.Module):
 
         seq_logprobs = []
         seq_preds = []
+        top5_seq_logprobs = []
+        top5_seq_preds = []
         self.rnn.flatten_parameters()
         if mode == 'train':
             # use targets as rnn inputs
@@ -115,12 +117,16 @@ class DecoderRNN(nn.Module):
 
                 if t == 0:  # input <bos>
                     it = torch.LongTensor([self.sos_id] * batch_size)
+                    top5_it = torch.LongTensor([[self.sos_id] * 5 for _ in range(batch_size)])
                     if self.using_gpu:
                         it = it.cuda()
                 elif sample_max:
                     sampleLogprobs, it = torch.max(logprobs, 1)
+                    top5Logprobs, top5_it = torch.topk(logprobs, k=5, largest=True, sorted=True)
                     seq_logprobs.append(sampleLogprobs.view(-1, 1))
+                    top5_seq_logprobs += [top5Logprobs.unsqueeze(1)]
                     it = it.view(-1).long()
+                    top5_it = top5_it.long()
 
                 else:
                     # sample according to distribuition
@@ -137,6 +143,7 @@ class DecoderRNN(nn.Module):
                     it = it.view(-1).long()
 
                 seq_preds.append(it.view(-1, 1))
+                top5_seq_preds += [top5_it.unsqueeze(1)]
 
                 xt = self.embedding(it)
                 decoder_input = torch.cat([xt, context], dim=1)
@@ -148,8 +155,10 @@ class DecoderRNN(nn.Module):
 
             seq_logprobs = torch.cat(seq_logprobs, 1)
             seq_preds = torch.cat(seq_preds[1:], 1)
+            top5_seq_logprobs = torch.cat(top5_seq_logprobs, 1)
+            top5_seq_preds = torch.cat(top5_seq_preds[1:], 1)
 
-        return seq_logprobs, seq_preds
+        return seq_logprobs, seq_preds, top5_seq_logprobs,top5_seq_preds
 
     def _init_weights(self):
         """ init the weight of some layers
