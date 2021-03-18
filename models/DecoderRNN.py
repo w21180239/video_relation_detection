@@ -29,8 +29,11 @@ class DecoderRNN(nn.Module):
                  rnn_cell='gru',
                  bidirectional=False,
                  input_dropout_p=0.1,
-                 rnn_dropout_p=0.1):
+                 rnn_dropout_p=0.1,
+                 using_gpu = True):
         super(DecoderRNN, self).__init__()
+
+        self.using_gpu = using_gpu
 
         self.bidirectional_encoder = bidirectional
 
@@ -111,7 +114,9 @@ class DecoderRNN(nn.Module):
                     decoder_hidden.squeeze(0), encoder_outputs)
 
                 if t == 0:  # input <bos>
-                    it = torch.LongTensor([self.sos_id] * batch_size).cuda()
+                    it = torch.LongTensor([self.sos_id] * batch_size)
+                    if self.using_gpu:
+                        it = it.cuda()
                 elif sample_max:
                     sampleLogprobs, it = torch.max(logprobs, 1)
                     seq_logprobs.append(sampleLogprobs.view(-1, 1))
@@ -124,7 +129,9 @@ class DecoderRNN(nn.Module):
                     else:
                         # scale logprobs by temperature
                         prob_prev = torch.exp(torch.div(logprobs, temperature))
-                    it = torch.multinomial(prob_prev, 1).cuda()
+                    it = torch.multinomial(prob_prev, 1)
+                    if self.using_gpu:
+                        it = it.cuda()
                     sampleLogprobs = logprobs.gather(1, it)
                     seq_logprobs.append(sampleLogprobs.view(-1, 1))
                     it = it.view(-1).long()

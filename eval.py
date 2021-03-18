@@ -36,10 +36,15 @@ def test(model, crit, dataset, vocab, opt):
     samples = {}
     for data in loader:
         # forward the model to get loss
-        fc_feats = data['fc_feats'].cuda()
-        labels = data['labels'].cuda()
-        masks = data['masks'].cuda()
+        fc_feats = data['fc_feats']
+        labels = data['labels']
+        masks = data['masks']
         video_ids = data['video_ids']
+
+        if opt["gpu"] != '-1':
+            fc_feats = fc_feats.cuda()
+            labels = labels.cuda()
+            masks = masks.cuda()
 
         # forward the model to also get generated samples for each image
         with torch.no_grad():
@@ -74,14 +79,17 @@ def main(opt):
     opt["seq_length"] = dataset.max_len
     if opt["model"] == 'S2VTModel':
         model = S2VTModel(opt["vocab_size"], opt["max_len"], opt["dim_hidden"], opt["dim_word"],
-                          rnn_dropout_p=opt["rnn_dropout_p"]).cuda()
+                          rnn_dropout_p=opt["rnn_dropout_p"])
     elif opt["model"] == "S2VTAttModel":
         encoder = EncoderRNN(opt["dim_vid"], opt["dim_hidden"], bidirectional=opt["bidirectional"],
                              input_dropout_p=opt["input_dropout_p"], rnn_dropout_p=opt["rnn_dropout_p"])
         decoder = DecoderRNN(opt["vocab_size"], opt["max_len"], opt["dim_hidden"], opt["dim_word"],
                              input_dropout_p=opt["input_dropout_p"],
-                             rnn_dropout_p=opt["rnn_dropout_p"], bidirectional=opt["bidirectional"])
-        model = S2VTAttModel(encoder, decoder).cuda()
+                             rnn_dropout_p=opt["rnn_dropout_p"], bidirectional=opt["bidirectional"],
+                             using_gpu=False if opt["gpu"] == '-1' else True)
+        model = S2VTAttModel(encoder, decoder)
+    if opt["gpu"] != '-1':
+        model = model.cuda()
     # model = nn.DataParallel(model)
     # Setup the model
     model.load_state_dict(torch.load(opt["saved_model"]))
@@ -103,7 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('--dump_path', type=int, default=0,
                         help='Write image paths along with predictions into vis json? (1=yes,0=no)')
     parser.add_argument('--gpu', type=str, default='0',
-                        help='gpu device number')
+                        help='gpu device number, -1 represent using cpu')
     parser.add_argument('--batch_size', type=int, default=128,
                         help='minibatch size')
     parser.add_argument('--sample_max', type=int, default=1,
@@ -117,5 +125,6 @@ if __name__ == '__main__':
     opt = json.load(open(args["recover_opt"]))
     for k, v in args.items():
         opt[k] = v
-    os.environ['CUDA_VISIBLE_DEVICES'] = opt["gpu"]
+    if opt["gpu"] != '-1':
+        os.environ['CUDA_VISIBLE_DEVICES'] = opt["gpu"]
     main(opt)

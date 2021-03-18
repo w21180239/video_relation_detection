@@ -71,5 +71,5 @@ python train.py --gpu 0 --epochs 51 --batch_size 16 --checkpoint_path data/save 
    opt_info.json will be in same directory as saved model.
 
 ```bash
-python eval.py 
+python eval.py --recover_opt data/save/opt_info.json --saved_model data/save/model_50.pth --batch_size 100 --gpu 0
 ```
