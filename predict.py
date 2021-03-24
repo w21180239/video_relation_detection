@@ -7,8 +7,9 @@ from torch.utils.data import DataLoader
 
 import misc.utils as utils
 from dataloader import VideoDataset
-from misc.cocoeval import suppress_stdout_stderr, COCOScorer
 from models import EncoderRNN, DecoderRNN, S2VTAttModel, S2VTModel
+import pandas as pd
+import time
 
 
 def convert_data_to_coco_scorer_format(data_frame):
@@ -24,48 +25,40 @@ def convert_data_to_coco_scorer_format(data_frame):
     return gts
 
 
-def predict(model, crit, dataset, vocab, opt):
+def predict(model, crit, dataset, vocab, opt, params):
+    object = json.load(open(params['object_json'], 'r'))
+    relation = json.load(open(params['relationship_json'], 'r'))
+
     model.eval()
-    loader = DataLoader(dataset, batch_size=opt["batch_size"], shuffle=True)
-    results = []
-    samples = {}
+    loader = DataLoader(dataset, batch_size=opt["batch_size"], shuffle=False)
     for data in loader:
         # forward the model to get loss
         fc_feats = data['fc_feats']
-        labels = data['labels']
-        masks = data['masks']
-        video_ids = data['video_ids']
 
         if opt["gpu"] != '-1':
             fc_feats = fc_feats.cuda()
-            labels = labels.cuda()
-            masks = masks.cuda()
 
         # forward the model to also get generated samples for each image
         with torch.no_grad():
-            seq_probs, seq_preds = model(
+            seq_prob, seq_preds, all_seq_logprobs, all_seq_preds = model(
                 fc_feats, mode='inference', opt=opt)
+        jj = seq_prob[0,:]
+        hh = all_seq_logprobs[0,:,0]
+        dd = all_seq_preds[0,:,0]
+        answer,visualize_re = utils.decode_index_into_final_answer(vocab, object, relation, all_seq_preds)
 
-        sents = utils.decode_sequence(vocab, seq_preds)
-
-        for k, sent in enumerate(sents):
-            video_id = video_ids[k]
-            samples[video_id] = [{'image_id': video_id, 'caption': sent}]
-
-
-    results.append(samples)
-
-    if not os.path.exists(opt["results_path"]):
-        os.makedirs(opt["results_path"])
-
-
-    with open(os.path.join(opt["results_path"],
-                           opt["model"].split("/")[-1].split('.')[0] + ".json"), 'w') as prediction_results:
-        json.dump({"predictions": samples},
-                  prediction_results)
+        if not os.path.exists(opt["results_path"]):
+            os.makedirs(opt["results_path"])
+        answer_df = pd.DataFrame({'label': answer})
+        now_time = time.strftime("%Y_%m_%d %H_%M_%S", time.localtime())
+        answer_df.to_csv(os.path.join(opt["results_path"],
+                                      opt["model"].split("/")[-1].split('.')[0] + f"_{now_time}.csv"), index_label='ID')
+        with open(os.path.join(opt["results_path"],
+                                      opt["model"].split("/")[-1].split('.')[0] + f"_{now_time}.json"),'w') as json_out:
+            json.dump(visualize_re,json_out)
 
 
-def main(opt):
+def main(opt, params):
     dataset = VideoDataset(opt, "test")
     opt["vocab_size"] = dataset.get_vocab_size()
     opt["seq_length"] = dataset.max_len
@@ -87,7 +80,7 @@ def main(opt):
     model.load_state_dict(torch.load(opt["saved_model"]))
     crit = utils.LanguageModelCriterion()
 
-    predict(model, crit, dataset, dataset.get_vocab(), opt)
+    predict(model, crit, dataset, dataset.get_vocab(), opt, params)
 
 
 if __name__ == '__main__':
@@ -111,6 +104,10 @@ if __name__ == '__main__':
     parser.add_argument('--temperature', type=float, default=1.0)
     parser.add_argument('--beam_size', type=int, default=1,
                         help='used when sample_max = 1. Usually 2 or 3 works well.')
+    parser.add_argument('--object_json', type=str, default='data/5242_data/object1_object2.json',
+                        help='object info')
+    parser.add_argument('--relationship_json', default='data/5242_data/relationship.json',
+                        help='relationship info')
 
     args = parser.parse_args()
     args = vars((args))
@@ -119,4 +116,4 @@ if __name__ == '__main__':
         opt[k] = v
     if opt["gpu"] != '-1':
         os.environ['CUDA_VISIBLE_DEVICES'] = opt["gpu"]
-    main(opt)
+    main(opt, args)

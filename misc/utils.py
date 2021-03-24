@@ -21,6 +21,41 @@ def decode_sequence(ix_to_word, seq):
     return out
 
 
+def decode_index_into_final_answer(ix_to_word, object_ix, relation_ix, seq):
+    submit_re = []
+    visualize_re = {}
+    for k in range(seq.shape[0]):
+        left_obj, right_obj, relation = [], [], []
+        vi_left,vi_re,vi_right = [],[],[]
+        for i in range(seq.shape[2]):
+            word = ix_to_word[str(seq[k, 0, i].item())]
+            if len(left_obj) < 5 and word in object_ix:
+                left_obj += [object_ix[word]]
+                vi_left+=[word]
+
+        for i in range(seq.shape[2]):
+            word = ix_to_word[str(seq[k, 1, i].item())]
+            if len(relation) < 5 and word in relation_ix:
+                relation += [relation_ix[word]]
+                vi_re+=[word]
+
+        for i in range(seq.shape[2]):
+            word = ix_to_word[str(seq[k, 2, i].item())]
+            if len(right_obj) < 5 and word in object_ix:
+                right_obj += [object_ix[word]]
+                vi_right+=[word]
+
+        submit_re += [list2str(left_obj), list2str(relation), list2str(right_obj)]
+        visualize_re[k] = {'left_object':vi_left,'relation':vi_re,'right_object':vi_right}
+
+    return submit_re,visualize_re
+
+def list2str(arr:[int]) -> str:
+    re = ''
+    for num in arr:
+        re += f'{num} '
+    return re[:-1]
+
 class RewardCriterion(nn.Module):
 
     def __init__(self):

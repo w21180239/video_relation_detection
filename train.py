@@ -41,7 +41,7 @@ def train(loader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
 
             optimizer.zero_grad()
             if not sc_flag:
-                seq_probs, _ = model(fc_feats, labels, 'train')
+                seq_probs, _,_,_ = model(fc_feats, labels, 'train')
                 loss = crit(seq_probs, labels[:, 1:], masks[:, 1:])
             else:
                 seq_probs, seq_preds = model(

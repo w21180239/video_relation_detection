@@ -60,6 +60,14 @@ class VideoDataset(Dataset):
             fc_feat = np.concatenate((fc_feat, np.tile(c3d_feat, (fc_feat.shape[0], 1))), axis=1)
         label = np.zeros(self.max_len)
         mask = np.zeros(self.max_len)
+
+        # test data
+        if f'video{ix}' not in self.captions:
+            data = {}
+            data['fc_feats'] = torch.from_numpy(fc_feat).type(torch.FloatTensor)
+            data['video_ids'] = 'video%i' % (ix)
+            return data
+
         captions = self.captions[f'video{ix}']['final_captions']
         gts = np.zeros((len(captions), self.max_len))
         for i, cap in enumerate(captions):
