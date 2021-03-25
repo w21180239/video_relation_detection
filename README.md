@@ -63,7 +63,7 @@ python prepro_vocab.py
 
 ```bash
 
-python train.py --gpu 0 --epochs 51 --batch_size 16 --checkpoint_path data/save --feats_dir data/feats/resnet152 --model S2VTAttModel  --with_c3d 0 --dim_vid 2048 --max_len 5
+python train.py --gpu 0 --epochs 151 --batch_size 128 --checkpoint_path data/save --feats_dir data/feats/resnet152 --model S2VTAttModel  --with_c3d 1 --dim_vid 2048 --max_len 5
 ```
 
 3. test
@@ -72,4 +72,10 @@ python train.py --gpu 0 --epochs 51 --batch_size 16 --checkpoint_path data/save 
 
 ```bash
 python eval.py --recover_opt data/save/opt_info.json --saved_model data/save/model_50.pth --batch_size 100 --gpu 0
+```
+
+4. predict
+
+```bash
+python predict.py --recover_opt data/save/opt_info.json --saved_model data/save/model_50.pth --batch_size 128 --gpu 0
 ```
