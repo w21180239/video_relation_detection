@@ -41,7 +41,7 @@ def train(loader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
 
             optimizer.zero_grad()
             if not sc_flag:
-                seq_probs, _,_,_ = model(fc_feats, labels, 'train')
+                seq_probs, _, _, _ = model(fc_feats, labels, 'train')
                 loss = crit(seq_probs, labels[:, 1:], masks[:, 1:])
             else:
                 seq_probs, seq_preds = model(
@@ -89,13 +89,13 @@ def main(opt):
             opt["max_len"],
             opt["dim_hidden"],
             opt["dim_word"],
-            opt['dim_vid'],
+            opt['dim_vid'] + opt['c3d_feat_dim'],
             rnn_cell=opt['rnn_type'],
             n_layers=opt['num_layers'],
             rnn_dropout_p=opt["rnn_dropout_p"])
     elif opt["model"] == "S2VTAttModel":
         encoder = EncoderRNN(
-            opt["dim_vid"],
+            opt["dim_vid"] + opt['c3d_feat_dim'],
             opt["dim_hidden"],
             bidirectional=opt["bidirectional"],
             input_dropout_p=opt["input_dropout_p"],

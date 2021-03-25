@@ -27,9 +27,11 @@ def parse_opt():
         default=['data/feats/resnet152/'],
         help='path to the directory containing the preprocessed fc feats')
 
-    parser.add_argument('--c3d_feats_dir', type=str, default='data/c3d_feats')
+    parser.add_argument('--c3d_feats_dir', type=str, default='data/feats/conv3d_feats')
     parser.add_argument(
         '--with_c3d', type=int, default=0, help='whether to use c3d features')
+    parser.add_argument(
+        '--c3d_feat_dim', type=int, default=400, help='the dim of c3d features')
 
     parser.add_argument(
         '--cached_tokens',

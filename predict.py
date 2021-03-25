@@ -42,9 +42,6 @@ def predict(model, crit, dataset, vocab, opt, params):
         with torch.no_grad():
             seq_prob, seq_preds, all_seq_logprobs, all_seq_preds = model(
                 fc_feats, mode='inference', opt=opt)
-        jj = seq_prob[0,:]
-        hh = all_seq_logprobs[0,:,0]
-        dd = all_seq_preds[0,:,0]
         answer,visualize_re = utils.decode_index_into_final_answer(vocab, object, relation, all_seq_preds)
 
         if not os.path.exists(opt["results_path"]):
@@ -66,7 +63,7 @@ def main(opt, params):
         model = S2VTModel(opt["vocab_size"], opt["max_len"], opt["dim_hidden"], opt["dim_word"],
                           rnn_dropout_p=opt["rnn_dropout_p"])
     elif opt["model"] == "S2VTAttModel":
-        encoder = EncoderRNN(opt["dim_vid"], opt["dim_hidden"], bidirectional=opt["bidirectional"],
+        encoder = EncoderRNN(opt["dim_vid"]+ opt['c3d_feat_dim'], opt["dim_hidden"], bidirectional=opt["bidirectional"],
                              input_dropout_p=opt["input_dropout_p"], rnn_dropout_p=opt["rnn_dropout_p"])
         decoder = DecoderRNN(opt["vocab_size"], opt["max_len"], opt["dim_hidden"], opt["dim_word"],
                              input_dropout_p=opt["input_dropout_p"],

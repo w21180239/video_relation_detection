@@ -56,7 +56,6 @@ class VideoDataset(Dataset):
         fc_feat = np.concatenate(fc_feat, axis=1)
         if self.with_c3d == 1:
             c3d_feat = np.load(os.path.join(self.c3d_feats_dir, 'video%i.npy' % (ix)))
-            c3d_feat = np.mean(c3d_feat, axis=0, keepdims=True)
             fc_feat = np.concatenate((fc_feat, np.tile(c3d_feat, (fc_feat.shape[0], 1))), axis=1)
         label = np.zeros(self.max_len)
         mask = np.zeros(self.max_len)
