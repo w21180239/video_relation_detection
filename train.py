@@ -12,9 +12,32 @@ import opts
 from dataloader import VideoDataset
 from misc.rewards import get_self_critical_reward, init_cider_scorer
 from models import DecoderRNN, EncoderRNN, S2VTAttModel, S2VTModel
+from ml_metrics import mapk
 
 
-def train(loader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
+def val_map5(model, val_data,crit):
+    fc_feats = val_data['fc_feats']
+    labels = val_data['labels']
+    masks = val_data['masks']
+
+    if opt["gpu"] != '-1':
+        torch.cuda.synchronize()
+        fc_feats = fc_feats.cuda()
+        labels = labels.cuda()
+        masks = masks.cuda()
+
+    with torch.no_grad():
+        _, _, _, all_seq_preds = model(
+            fc_feats, mode='inference', opt=opt)
+        seq_probs, _, _, _ = model(fc_feats, labels, 'train')
+    loss = crit(seq_probs, labels[:, 1:], masks[:, 1:])
+    val_score = sum(
+        [mapk(list(labels[:, i + 1].unsqueeze(1).cpu()), list(all_seq_preds[:, i, :].cpu()), 5)
+         for i in range(3)]) / 3
+    return loss,val_score
+
+
+def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
     model.train()
     # model = nn.DataParallel(model)
     for epoch in range(opt["epochs"]):
@@ -28,7 +51,11 @@ def train(loader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
         else:
             sc_flag = False
 
-        for data in loader:
+        # batch size must > 117
+        val_data = None
+        for data in val_dataloader:
+            val_data = data
+        for data in train_loader:
             fc_feats = data['fc_feats']
             labels = data['labels']
             masks = data['masks']
@@ -62,10 +89,13 @@ def train(loader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
 
             if not sc_flag:
                 print("iter %d (epoch %d), train_loss = %.6f" %
-                      (iteration, epoch, train_loss))
+                      (iteration, epoch, train_loss), end='')
             else:
                 print("iter %d (epoch %d), avg_reward = %.6f" %
-                      (iteration, epoch, np.mean(reward[:, 0])))
+                      (iteration, epoch, np.mean(reward[:, 0])), end='')
+
+        val_loss,val_score = val_map5(model, val_data,crit)
+        print(f' val_loss:{val_loss} val_score:{val_score}')
 
         if epoch % opt["save_checkpoint_every"] == 0:
             model_path = os.path.join(opt["checkpoint_path"],
@@ -79,9 +109,12 @@ def train(loader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
 
 
 def main(opt):
-    dataset = VideoDataset(opt, 'train')
-    dataloader = DataLoader(dataset, batch_size=opt["batch_size"], shuffle=False)
-    opt["vocab_size"] = dataset.get_vocab_size()
+    train_dataset = VideoDataset(opt, 'train')
+    train_dataloader = DataLoader(train_dataset, batch_size=opt["batch_size"], shuffle=True)
+    val_dataset = VideoDataset(opt, 'val')
+    val_dataloader = DataLoader(val_dataset, batch_size=opt["batch_size"], shuffle=False)
+
+    opt["vocab_size"] = train_dataset.get_vocab_size()
     model = None
     if opt["model"] == 'S2VTModel':
         model = S2VTModel(
@@ -89,13 +122,13 @@ def main(opt):
             opt["max_len"],
             opt["dim_hidden"],
             opt["dim_word"],
-            opt['dim_vid'] + opt['c3d_feat_dim'],
+            opt['dim_vid'] + (opt['c3d_feat_dim'] if opt['with_c3d'] else 0),
             rnn_cell=opt['rnn_type'],
             n_layers=opt['num_layers'],
             rnn_dropout_p=opt["rnn_dropout_p"])
     elif opt["model"] == "S2VTAttModel":
         encoder = EncoderRNN(
-            opt["dim_vid"] + opt['c3d_feat_dim'],
+            opt["dim_vid"] + (opt['c3d_feat_dim'] if opt['with_c3d'] else 0),
             opt["dim_hidden"],
             bidirectional=opt["bidirectional"],
             input_dropout_p=opt["input_dropout_p"],
@@ -127,7 +160,7 @@ def main(opt):
         step_size=opt["learning_rate_decay_every"],
         gamma=opt["learning_rate_decay_rate"])
 
-    train(dataloader, model, crit, optimizer, exp_lr_scheduler, opt, rl_crit)
+    train(train_dataloader, val_dataloader, model, crit, optimizer, exp_lr_scheduler, opt, rl_crit)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from random import shuffle
 
 
 def main(params):
@@ -31,6 +32,7 @@ def main(params):
     itow[1] = '<sos>'
 
     train_data_list = [int(i) for i in os.listdir(os.path.join(params['data_dic'], 'train'))]
+    shuffle(train_data_list)
     val_data_list, train_data_list = train_data_list[:len(train_data_list) // 5], train_data_list[
                                                                                   len(train_data_list) // 5:]
     test_data_list = [int(i) for i in os.listdir(os.path.join(params['data_dic'], 'test'))]

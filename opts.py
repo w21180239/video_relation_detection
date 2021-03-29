@@ -52,7 +52,7 @@ def parse_opt():
     parser.add_argument(
         "--bidirectional",
         type=int,
-        default=0,
+        default=1,
         help="0 for disable, 1 for enable. encoder/decoder bidirectional.")
 
     parser.add_argument(
@@ -131,7 +131,7 @@ def parse_opt():
         default=5e-4,
         help='weight_decay. strength of weight regularization')
 
-    parser.add_argument(
+    parser.add_argument( 
         '--save_checkpoint_every',
         type=int,
         default=50,

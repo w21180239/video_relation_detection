@@ -63,7 +63,7 @@ def main(opt, params):
         model = S2VTModel(opt["vocab_size"], opt["max_len"], opt["dim_hidden"], opt["dim_word"],
                           rnn_dropout_p=opt["rnn_dropout_p"])
     elif opt["model"] == "S2VTAttModel":
-        encoder = EncoderRNN(opt["dim_vid"]+ opt['c3d_feat_dim'], opt["dim_hidden"], bidirectional=opt["bidirectional"],
+        encoder = EncoderRNN(opt["dim_vid"]+ (opt['c3d_feat_dim'] if opt['with_c3d'] else 0), opt["dim_hidden"], bidirectional=opt["bidirectional"],
                              input_dropout_p=opt["input_dropout_p"], rnn_dropout_p=opt["rnn_dropout_p"])
         decoder = DecoderRNN(opt["vocab_size"], opt["max_len"], opt["dim_hidden"], opt["dim_word"],
                              input_dropout_p=opt["input_dropout_p"],
