@@ -65,7 +65,7 @@ def parse_opt():
     parser.add_argument(
         '--input_dropout_p',
         type=float,
-        default=0.2,
+        default=0,
         help='strength of dropout in the Language Model RNN')
     parser.add_argument(
         '--rnn_type', type=str, default='gru', help='lstm or gru')
@@ -77,7 +77,7 @@ def parse_opt():
     parser.add_argument(
         '--dim_word',
         type=int,
-        default=512,
+        default=256,
         help='the encoding size of each token in the vocabulary, and the video.'
     )
 
@@ -108,12 +108,12 @@ def parse_opt():
     )
 
     parser.add_argument(
-        '--learning_rate', type=float, default=4e-4, help='learning rate')
+        '--learning_rate', type=float, default=1e-3, help='learning rate')
 
     parser.add_argument(
         '--learning_rate_decay_every',
         type=int,
-        default=200,
+        default=10,
         help='every how many iterations thereafter to drop LR?(in epoch)')
     parser.add_argument('--learning_rate_decay_rate', type=float, default=0.8)
     parser.add_argument(
@@ -128,7 +128,7 @@ def parse_opt():
     parser.add_argument(
         '--weight_decay',
         type=float,
-        default=5e-4,
+        default=1e-2,
         help='weight_decay. strength of weight regularization')
 
     parser.add_argument( 

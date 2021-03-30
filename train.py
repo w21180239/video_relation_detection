@@ -15,10 +15,11 @@ from models import DecoderRNN, EncoderRNN, S2VTAttModel, S2VTModel
 from ml_metrics import mapk
 
 
-def val_map5(model, val_data,crit):
+def val_map5(model, val_data, crit):
     fc_feats = val_data['fc_feats']
     labels = val_data['labels']
     masks = val_data['masks']
+    model.eval()
 
     if opt["gpu"] != '-1':
         torch.cuda.synchronize()
@@ -34,7 +35,9 @@ def val_map5(model, val_data,crit):
     val_score = sum(
         [mapk(list(labels[:, i + 1].unsqueeze(1).cpu()), list(all_seq_preds[:, i, :].cpu()), 5)
          for i in range(3)]) / 3
-    return loss,val_score
+
+    model.train()
+    return loss, val_score
 
 
 def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
@@ -89,13 +92,13 @@ def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, op
 
             if not sc_flag:
                 print("iter %d (epoch %d), train_loss = %.6f" %
-                      (iteration, epoch, train_loss), end='')
+                      (iteration, epoch, train_loss))
             else:
                 print("iter %d (epoch %d), avg_reward = %.6f" %
-                      (iteration, epoch, np.mean(reward[:, 0])), end='')
+                      (iteration, epoch, np.mean(reward[:, 0])))
 
-        val_loss,val_score = val_map5(model, val_data,crit)
-        print(f' val_loss:{val_loss} val_score:{val_score}')
+        val_loss, val_score = val_map5(model, val_data, crit)
+        print(f'val_loss:{val_loss} val_score:{val_score}')
 
         if epoch % opt["save_checkpoint_every"] == 0:
             model_path = os.path.join(opt["checkpoint_path"],
@@ -133,7 +136,8 @@ def main(opt):
             bidirectional=opt["bidirectional"],
             input_dropout_p=opt["input_dropout_p"],
             rnn_cell=opt['rnn_type'],
-            rnn_dropout_p=opt["rnn_dropout_p"])
+            rnn_dropout_p=opt["rnn_dropout_p"],
+        )
         decoder = DecoderRNN(
             opt["vocab_size"],
             opt["max_len"],
@@ -142,7 +146,8 @@ def main(opt):
             input_dropout_p=opt["input_dropout_p"],
             rnn_cell=opt['rnn_type'],
             rnn_dropout_p=opt["rnn_dropout_p"],
-            bidirectional=opt["bidirectional"])
+            bidirectional=opt["bidirectional"],
+            using_gpu=(opt["gpu"] != '-1') )
         model = S2VTAttModel(encoder, decoder)
     else:
         print('invalid model name')

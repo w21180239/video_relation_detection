@@ -197,3 +197,11 @@ model_970, loss: 0.010637
 model_980, loss: 0.010703
 model_990, loss: 0.010521
 model_1000, loss: 0.010402
+model_0, loss: 13.882832
+model_0, loss: 12.972136
+model_0, loss: 13.838681
+model_0, loss: 14.845408
+model_0, loss: 15.705147
+model_0, loss: 16.227697
+model_0, loss: 15.311594
+model_0, loss: 25.697861
