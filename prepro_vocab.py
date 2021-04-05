@@ -33,8 +33,8 @@ def main(params):
 
     train_data_list = [int(i) for i in os.listdir(os.path.join(params['data_dic'], 'train'))]
     shuffle(train_data_list)
-    val_data_list, train_data_list = train_data_list[:len(train_data_list) // 5], train_data_list[
-                                                                                  len(train_data_list) // 5:]
+    val_data_list, train_data_list = train_data_list[:len(train_data_list) // 6], train_data_list[
+                                                                                  len(train_data_list) // 6:]
     test_data_list = [int(i) for i in os.listdir(os.path.join(params['data_dic'], 'test'))]
 
     out = {}

@@ -13,6 +13,8 @@ from dataloader import VideoDataset
 from misc.rewards import get_self_critical_reward, init_cider_scorer
 from models import DecoderRNN, EncoderRNN, S2VTAttModel, S2VTModel
 from ml_metrics import mapk
+from pytorchtools import EarlyStopping
+import time
 
 
 def val_map5(model, val_data, crit):
@@ -42,6 +44,18 @@ def val_map5(model, val_data, crit):
 
 def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
     model.train()
+    # early stop
+    now_time = time.strftime("%Y_%m_%d %H_%M_%S", time.localtime())
+    early_stop_save_path = f'early_stop_models/{opt["model"]}_{now_time}.pth'
+    if not os.path.exists('early_stop_models'):
+        os.mkdir('early_stop_models')
+    early_stopping = EarlyStopping(verbose=True,patience=5,path=early_stop_save_path)
+
+    # batch size must > 117
+    val_data = None
+    for data in val_dataloader:
+        val_data = data
+
     # model = nn.DataParallel(model)
     for epoch in range(opt["epochs"]):
         lr_scheduler.step()
@@ -54,10 +68,7 @@ def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, op
         else:
             sc_flag = False
 
-        # batch size must > 117
-        val_data = None
-        for data in val_dataloader:
-            val_data = data
+
         for data in train_loader:
             fc_feats = data['fc_feats']
             labels = data['labels']
@@ -97,8 +108,6 @@ def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, op
                 print("iter %d (epoch %d), avg_reward = %.6f" %
                       (iteration, epoch, np.mean(reward[:, 0])))
 
-        val_loss, val_score = val_map5(model, val_data, crit)
-        print(f'val_loss:{val_loss} val_score:{val_score}')
 
         if epoch % opt["save_checkpoint_every"] == 0:
             model_path = os.path.join(opt["checkpoint_path"],
@@ -109,6 +118,16 @@ def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, op
             print("model saved to %s" % (model_path))
             with open(model_info_path, 'a') as f:
                 f.write("model_%d, loss: %.6f\n" % (epoch, train_loss))
+
+        val_loss, val_score = val_map5(model, val_data, crit)
+        print(f'val_loss:{val_loss} val_score:{val_score}')
+        early_stopping(val_loss,model)
+        if early_stopping.early_stop:
+            print("Early stopping")
+            break
+    model.load_state_dict(torch.load(early_stop_save_path))
+    val_loss, val_score = val_map5(model, val_data, crit)
+    print(f'Best val_loss:{val_loss} val_score:{val_score}')
 
 
 def main(opt):

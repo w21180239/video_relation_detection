@@ -103,7 +103,6 @@ if __name__ == '__main__':
         model = pretrainedmodels.inceptionv4(
             num_classes=1000, pretrained='imagenet')
         load_image_fn = utils.LoadTransformImage(model)
-
     else:
         print("doesn't support %s" % (params['model']))
         exit(-1)

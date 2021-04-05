@@ -31,7 +31,7 @@ def parse_opt():
     parser.add_argument(
         '--with_c3d', type=int, default=0, help='whether to use c3d features')
     parser.add_argument(
-        '--c3d_feat_dim', type=int, default=400, help='the dim of c3d features')
+        '--c3d_feat_dim', type=int, default=512, help='the dim of c3d features')
 
     parser.add_argument(
         '--cached_tokens',
@@ -58,10 +58,10 @@ def parse_opt():
     parser.add_argument(
         '--dim_hidden',
         type=int,
-        default=512,
+        default=128,
         help='size of the rnn hidden layer')
     parser.add_argument(
-        '--num_layers', type=int, default=1, help='number of layers in the RNN')
+        '--num_layers', type=int, default=6, help='number of layers in the RNN')
     parser.add_argument(
         '--input_dropout_p',
         type=float,
@@ -77,7 +77,7 @@ def parse_opt():
     parser.add_argument(
         '--dim_word',
         type=int,
-        default=256,
+        default=128,
         help='the encoding size of each token in the vocabulary, and the video.'
     )
 
@@ -128,13 +128,13 @@ def parse_opt():
     parser.add_argument(
         '--weight_decay',
         type=float,
-        default=1e-2,
+        default=1e-3,
         help='weight_decay. strength of weight regularization')
 
     parser.add_argument( 
         '--save_checkpoint_every',
         type=int,
-        default=50,
+        default=100,
         help='how often to save a model checkpoint (in epoch)?')
     parser.add_argument(
         '--checkpoint_path',
