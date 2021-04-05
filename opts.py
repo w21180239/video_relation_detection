@@ -58,7 +58,7 @@ def parse_opt():
     parser.add_argument(
         '--dim_hidden',
         type=int,
-        default=128,
+        default=256,
         help='size of the rnn hidden layer')
     parser.add_argument(
         '--num_layers', type=int, default=6, help='number of layers in the RNN')
@@ -72,7 +72,7 @@ def parse_opt():
     parser.add_argument(
         '--rnn_dropout_p',
         type=float,
-        default=0.5,
+        default=0.6,
         help='strength of dropout in the Language Model RNN')
     parser.add_argument(
         '--dim_word',

@@ -1,9 +1,11 @@
 import json
 import os
+import time
 
 import numpy as np
 import torch
 import torch.optim as optim
+from ml_metrics import mapk
 from torch.nn.utils import clip_grad_value_
 from torch.utils.data import DataLoader
 
@@ -12,9 +14,7 @@ import opts
 from dataloader import VideoDataset
 from misc.rewards import get_self_critical_reward, init_cider_scorer
 from models import DecoderRNN, EncoderRNN, S2VTAttModel, S2VTModel
-from ml_metrics import mapk
 from pytorchtools import EarlyStopping
-import time
 
 
 def val_map5(model, val_data, crit):
@@ -45,7 +45,7 @@ def val_map5(model, val_data, crit):
 def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, opt, rl_crit=None):
     model.train()
     # early stop
-    now_time = time.strftime("%Y_%m_%d %H_%M_%S", time.localtime())
+    now_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
     early_stop_save_path = f'early_stop_models/{opt["model"]}_{now_time}.pth'
     if not os.path.exists('early_stop_models'):
         os.mkdir('early_stop_models')
