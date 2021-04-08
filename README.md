@@ -57,6 +57,8 @@ extract features from video.
 python prepro_feats.py 
 
 python prepro_vocab.py
+
+python prepro_val_data.py
 ```
 
 2. Training a model
