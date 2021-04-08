@@ -58,7 +58,7 @@ def parse_opt():
     parser.add_argument(
         '--dim_hidden',
         type=int,
-        default=256,
+        default=512,
         help='size of the rnn hidden layer')
     parser.add_argument(
         '--num_layers', type=int, default=6, help='number of layers in the RNN')
@@ -72,12 +72,12 @@ def parse_opt():
     parser.add_argument(
         '--rnn_dropout_p',
         type=float,
-        default=0.6,
+        default=0.5709203424462892,
         help='strength of dropout in the Language Model RNN')
     parser.add_argument(
         '--dim_word',
         type=int,
-        default=128,
+        default=32,
         help='the encoding size of each token in the vocabulary, and the video.'
     )
 
@@ -90,7 +90,7 @@ def parse_opt():
     # Optimization: General
 
     parser.add_argument(
-        '--epochs', type=int, default=6001, help='number of epochs')
+        '--epochs', type=int, default=41, help='number of epochs')
     parser.add_argument(
         '--batch_size', type=int, default=128, help='minibatch size')
     parser.add_argument(
@@ -108,12 +108,12 @@ def parse_opt():
     )
 
     parser.add_argument(
-        '--learning_rate', type=float, default=1e-3, help='learning rate')
+        '--learning_rate', type=float, default=0.0009421735664175601, help='learning rate')
 
     parser.add_argument(
         '--learning_rate_decay_every',
         type=int,
-        default=10,
+        default=100000,
         help='every how many iterations thereafter to drop LR?(in epoch)')
     parser.add_argument('--learning_rate_decay_rate', type=float, default=0.8)
     parser.add_argument(
@@ -128,13 +128,13 @@ def parse_opt():
     parser.add_argument(
         '--weight_decay',
         type=float,
-        default=1e-3,
+        default=0.0007187119668187868,
         help='weight_decay. strength of weight regularization')
 
-    parser.add_argument( 
+    parser.add_argument(
         '--save_checkpoint_every',
         type=int,
-        default=100,
+        default=200,
         help='how often to save a model checkpoint (in epoch)?')
     parser.add_argument(
         '--checkpoint_path',
