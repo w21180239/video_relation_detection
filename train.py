@@ -49,7 +49,7 @@ def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, op
     early_stop_save_path = f'early_stop_models/{opt["model"]}_{now_time}.pth'
     if not os.path.exists('early_stop_models'):
         os.mkdir('early_stop_models')
-    early_stopping = EarlyStopping(verbose=True, patience=10, path=early_stop_save_path)
+    # early_stopping = EarlyStopping(verbose=True, patience=10, path=early_stop_save_path)
 
     # batch size must > 117
     val_data = None
@@ -121,13 +121,13 @@ def train(train_loader, val_dataloader, model, crit, optimizer, lr_scheduler, op
 
         val_loss, val_score = val_map5(model, val_data, crit)
         print(f'val_loss:{val_loss} val_score:{val_score}')
-        early_stopping(val_loss,model)
-        if early_stopping.early_stop:
-            print("Early stopping")
-            break
-    model.load_state_dict(torch.load(early_stop_save_path))
-    val_loss, val_score = val_map5(model, val_data, crit)
-    print(f'Best val_loss:{val_loss} val_score:{val_score}')
+        # early_stopping(val_loss,model)
+        # if early_stopping.early_stop:
+        #     print("Early stopping")
+        #     break
+    # model.load_state_dict(torch.load(early_stop_save_path))
+    # val_loss, val_score = val_map5(model, val_data, crit)
+    # print(f'Best val_loss:{val_loss} val_score:{val_score}')
 
 
 def main(opt):
